@@ -1,0 +1,1 @@
+find . -type f -printf "%T@ %t %p\n"
