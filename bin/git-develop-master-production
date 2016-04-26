@@ -1,13 +1,13 @@
 #!/bin/bash
 
-git checkout develop
+set -eu
+
 git fetch
-git rebase origin/develop
 
 git checkout master
-git fetch
-git merge develop
+git reset origin/master --hard
+git merge develop --no-ff
 
 git checkout production
-git fetch
-git merge master
+git reset origin/production --hard
+git merge master --no-ff
