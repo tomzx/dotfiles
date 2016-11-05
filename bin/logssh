@@ -1,0 +1,93 @@
+#!/usr/bin/perl -w
+#
+# logssh
+# John Simpson <jms1@jms1.net> 2008-07-15
+#
+###############################################################################
+#
+# Copyright (C) 2008 John Simpson.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License, version 3, as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+###############################################################################
+
+require 5.003 ;
+use strict ;
+
+###############################################################################
+#
+# configuration
+
+# the location of your normal "ssh" executable
+my $ssh = "/usr/bin/ssh" ;
+
+# the location of your "tee" executable
+my $tee = "/usr/bin/tee" ;
+
+# the directory where you want the logs to be stored
+# this directory must exist before running the program
+my $logdir = $ENV{"HOME"} . "/.ssh/logs" ;
+
+# do you want this script to show the real command before running it?
+my $show_cmd = 0 ;
+
+###############################################################################
+###############################################################################
+###############################################################################
+#
+# examine the command line arguments to find a "userid@server" string
+
+my $target = "" ;
+for my $k ( @ARGV )
+{
+	if ( $k =~ /\@/ )
+	{
+		$target = $k ;
+		last ;
+	}
+}
+
+die "Can't recognize user\@host target\n"
+	unless ( $target ) ;
+
+###############################################################################
+#
+# build the name of the log file
+
+my @d = localtime ;
+my $now = sprintf ( "%04d-%02d-%02d.%02d%02d%02d" ,
+	$d[5]+1900 , $d[4]+1 , $d[3] , $d[2] , $d[1] , $d[0] ) ;
+
+my $logfile = $logdir . "/$now.$target" ;
+
+###############################################################################
+#
+# build the final command that we will be running
+
+my $cmd = "$ssh " . join ( " " , @ARGV ) . " | $tee -a $logfile" ;
+
+###############################################################################
+#
+# start the log file with that command
+
+open ( L , ">$logfile" )
+	or die "Can't create logfile \"$logfile\": $!\n" ;
+print L "CMD: $cmd\n" , "=" x 78 , "\n" ;
+close L ;
+
+###############################################################################
+#
+# do the deed
+
+$show_cmd && print "% $cmd\n" ;
+exec $cmd or die "exec() failed: $!\n" ;
