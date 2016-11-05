@@ -1,0 +1,51 @@
+#!/bin/bash
+RECORDING_DIRECTORY=~/.recordings
+TIMESTAMP=$(date +"%Y-%m-%d_%H:%M:%S")
+FILENAME=$TIMESTAMP.record
+FILEPATH=$RECORDING_DIRECTORY/$FILENAME
+
+mkdir -p $RECORDING_DIRECTORY
+
+record() {
+	echo "Type exit to end recording"
+	script --timing="$FILEPATH.timing" "$FILEPATH"
+}
+
+play() {
+	RECORD_FILE=$1
+	RECORD_PATH=$RECORDING_DIRECTORY/$RECORD_FILE
+
+	if [ ! -f $RECORD_PATH ]; then
+		echo "Record '$RECORD_FILE' not found!"
+		exit 1
+	fi
+
+	run_play $RECORD_PATH
+}
+
+replay() {
+	LAST_RECORD_PATH=$(ls -t $RECORDING_DIRECTORY/*.record | head -n1)
+	run_play $LAST_RECORD_PATH
+}
+
+run_play() {
+	RECORD_PATH=$1
+	echo "Replaying $RECORD_PATH..."
+	scriptreplay --timing="$RECORD_PATH.timing" "$RECORD_PATH"
+	echo "Replay done!"
+}
+
+case "$1" in
+record)
+	record
+;;
+play)
+	play $2
+;;
+replay)
+	replay
+;;
+*)
+	echo "Usage: $0 {record|stop|play|replay}"
+	exit 1
+esac
